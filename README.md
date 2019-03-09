@@ -57,4 +57,16 @@ hudClassInstance.setBackgroundColor(color);
 /*
  * color: HEX string or RGBA Array
 */
+
+hudClassInstance.changeButtonTitle(index, newTitle);
+/*
+ * index: controlID or currentButton title. (if custom button you can type its name t_buttonName)
+ * newTitle: string
+*/
+
+hudClassInstance.changeButtonControl(index, newControl);
+/*
+ * index: controlID or currentButton title. (if custom button you can type its name t_buttonName)
+ * newControl: controlID or custom control (t_buttonName)
+*/
 ```
