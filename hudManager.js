@@ -21,6 +21,57 @@ class hudManager {
         this.hud.callFunction("DRAW_INSTRUCTIONAL_BUTTONS", this.style);
     }
 
+    changeButtonTitle (index, title) {
+        switch (typeof index) {
+            case 'string':
+                {
+                    Object.keys(this.buttons).forEach(button => {
+                        if (this.buttons[button].title === index || this.buttons[button].control === index) {
+                            this.hud.callFunction("SET_DATA_SLOT", parseInt(button), this.buttons[button].control, title);
+                        }
+                    });
+                    break;
+                }
+            case 'number':
+                {
+                    index = getControl(index);
+                    Object.keys(this.buttons).forEach(button => {
+                        if (this.buttons[button].control === index) {
+                            this.hud.callFunction("SET_DATA_SLOT", parseInt(button), this.buttons[button].control, title);
+                        }
+                    });
+                }
+        }
+
+        if (this.render) this.hud.callFunction("DRAW_INSTRUCTIONAL_BUTTONS", this.style);
+    }
+
+    changeButtonControl (index, control) {
+        switch (typeof index) {
+            case 'string':
+                {
+                    Object.keys(this.buttons).forEach(button => {
+                        if (this.buttons[button].title === index || this.buttons[button].control === index) {
+                            index = getControl(control);
+                            this.hud.callFunction("SET_DATA_SLOT", parseInt(button), index, this.buttons[button].title);
+                        }
+                    });
+                    break;
+                }
+            case 'number':
+                {
+                    index = getControl(index);
+                    Object.keys(this.buttons).forEach(button => {
+                        if (this.buttons[button].control === index) {
+                            control = getControl(control);
+                            this.hud.callFunction("SET_DATA_SLOT", parseInt(button), control, this.buttons[button].title);
+                        }
+                    });
+                }
+        }
+        if (this.render) this.hud.callFunction("DRAW_INSTRUCTIONAL_BUTTONS", this.style);
+    }
+
     setBackgroundColor(bgColor) {
         if (bgColor) {
             if (Array.isArray(bgColor)) {
@@ -47,33 +98,23 @@ class hudManager {
             slot = this.counter++;
         };
 
-        if (controlID > -1 && controlID < 357) {
-            cnt = mp.game.controls.getControlActionName(2, controlID, true);
-            this.hud.callFunction("SET_DATA_SLOT", slot, cnt, title);
-        } else {
-            mp.gui.chat.push('!{orange}[WARNING] !{white}Invalid controlID, make sure its between (0, 356).');
-            this.hud.callFunction("SET_DATA_SLOT", slot, "", title);
-        }
+        if (controlID) cnt = verifyControl(controlID);
+
+        this.hud.callFunction("SET_DATA_SLOT", slot, cnt, title);
         this.buttons[slot] = {
             title: title ? title : "",
             control: cnt ? cnt : ""
         };
-
-        this.hud.callFunction("DRAW_INSTRUCTIONAL_BUTTONS", this.style);
+        if (this.render) this.hud.callFunction("DRAW_INSTRUCTIONAL_BUTTONS", this.style);
     };
 
     addButtons(buttons) {
         if (typeof buttons === 'object') {
             Object.keys(buttons).forEach(btn => {
                 let title = btn,
-                    cnt, slot;
-                if (this.availableSlots.length > 0) {
-                    slot = this.availableSlots[0];
-                } else {
-                    slot = this.counter++;
-                };
-                if (buttons[btn])
-                    cnt = mp.game.controls.getControlActionName(2, buttons[btn], true);
+                    cnt, slot = this.availableSlots.length > 0 ? this.availableSlots[0] : this.counter++;
+                if (buttons[btn]) cnt = verifyControl(buttons[btn]);
+
                 this.hud.callFunction("SET_DATA_SLOT", slot, cnt, title);
                 this.buttons[slot] = {
                     title: title ? title : "",
@@ -85,7 +126,8 @@ class hudManager {
                     this.availableSlots.splice(index, 1);
                 }
             });
-            this.hud.callFunction("DRAW_INSTRUCTIONAL_BUTTONS", this.style);
+
+            if (this.render) this.hud.callFunction("DRAW_INSTRUCTIONAL_BUTTONS", this.style);
         } else {
             return mp.gui.chat.push('!{red}[ERROR] !{white}Invalid arguement form, please use object form that is instructed on the resource\'s description.');
         }
@@ -147,6 +189,33 @@ class hudManager {
         this.hud.callFunction("SET_CLEAR_SPACE", 100);
     }
 };
+
+function verifyControl (btn) {
+    let control;
+    switch (typeof btn) {
+        case 'number': {
+            control = getControl(btn);
+            break;
+        }
+
+        case 'string': {
+            if (btn.length > 1) {
+                control = `t_${btn.toString()}`;
+            }
+        };
+    }
+    mp.gui.chat.push(`Verifying: ${control}`)
+    return control;
+}
+
+function getControl (id) {
+    if (id > -1 && id < 357) {
+        return mp.game.controls.getControlActionName(2, id, true);
+    } else {
+        mp.gui.chat.push('!{orange}[WARNING] !{white}Invalid controlID, make sure its between (0, 356).');
+        return false;
+    }
+}
 
 function hexToRGB(hex) { // Thanks to root and lovely stackoverflow
     let bigint = parseInt(hex.replace(/[^0-9A-F]/gi, ''), 16);
